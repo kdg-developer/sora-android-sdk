@@ -1,12 +1,12 @@
-# Sora Android SDK
+# [Unofficial] Sora Android SDK
 
-[![Release](https://jitpack.io/v/shiguredo/sora-android-sdk.svg)](https://jitpack.io/#shiguredo/sora-android-sdk)
+[![Release](https://jitpack.io/v/soudegesu/sora-android-sdk.svg)](https://jitpack.io/#soudegesu/sora-android-sdk)
 [![libwebrtc](https://img.shields.io/badge/libwebrtc-m89.4389-blue.svg)](https://chromium.googlesource.com/external/webrtc/+/branch-heads/4389)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/shiguredo/sora-android-sdk.svg)](https://github.com/shiguredo/sora-android-sdk.svg)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 
-Sora Android SDK は [WebRTC SFU Sora](https://sora.shiguredo.jp) の Android クライアントアプリケーションを開発するためのライブラリです。
+Sora Android SDK は [WebRTC SFU Sora](https://sora.shiguredo.jp) の Android クライアントアプリケーションを開発するための **非公式な** ライブラリです。
 
 使い方は [Sora Android SDK ドキュメント](https://sora-android-sdk.shiguredo.jp/) を参照してください。
 
@@ -55,12 +55,12 @@ libwebrtc は、時雨堂ビルドの AAR を Jitpack.io から取得してい�
 
 時雨堂ビルドの libwebrtc については以下のサイトを参照ください。
 
-- https://github.com/shiguredo/shiguredo-webrtc-build
+- https://github.com/soudegesu/shiguredo-webrtc-build
   - ビルドスクリプト、ビルド設定ファイル、およびバージョンタグ
-- https://github.com/shiguredo/shiguredo-webrtc-android
+- https://github.com/soudegesu/shiguredo-webrtc-android
   - Android 用 AAR を公開するためのリポジトリ
   - jitpack.io はこのリポジトリのタグを見ている
-- https://jitpack.io/#shiguredo/shiguredo-webrtc-android/
+- https://jitpack.io/#soudegesu/shiguredo-webrtc-android/
 
 ## ローカルでのビルド
 
