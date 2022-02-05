@@ -1,10 +1,22 @@
 package jp.shiguredo.sora.sdk.channel.signaling.message
 
 import com.google.gson.Gson
-import jp.shiguredo.sora.sdk.Sora
+import jp.shiguredo.sora.sdk.error.SoraDisconnectReason
 import jp.shiguredo.sora.sdk.channel.option.SoraChannelRole
 import jp.shiguredo.sora.sdk.channel.option.SoraMediaOption
 import jp.shiguredo.sora.sdk.util.SoraLogger
+import org.webrtc.RTCStats
+import org.webrtc.RTCStatsReport
+
+class SoraRTCStats(private val map: Map<String, Any>) : Map<String, Any> by map {
+    constructor(stats: RTCStats) : this(
+        mapOf(
+            "id" to stats.id,
+            "type" to stats.type,
+            "timestamp" to stats.timestampUs
+        ) + stats.members
+    ) {}
+}
 
 class MessageConverter {
 
@@ -15,39 +27,29 @@ class MessageConverter {
         val gson = Gson()
 
         @JvmOverloads
-        fun buildConnectMessage(role: SoraChannelRole,
-                                channelId: String,
-                                dataChannelSignaling: Boolean?,
-                                ignoreDisconnectWebSocket: Boolean?,
-                                mediaOption: SoraMediaOption,
-                                metadata: Any?,
-                                sdp: String? = null,
-                                clientId: String? = null,
-                                signalingNotifyMetadata: Any? = null
+        fun buildConnectMessage(
+            role: SoraChannelRole,
+            channelId: String,
+            dataChannelSignaling: Boolean?,
+            ignoreDisconnectWebSocket: Boolean?,
+            mediaOption: SoraMediaOption,
+            metadata: Any?,
+            sdp: String? = null,
+            clientId: String? = null,
+            signalingNotifyMetadata: Any? = null,
+            redirect: Boolean = false
         ): String {
 
             val msg = ConnectMessage(
-                    role = role.signaling,
-                    channelId = channelId,
-                    dataChannelSignaling = dataChannelSignaling,
-                    ignoreDisconnectWebsocket = ignoreDisconnectWebSocket,
-                    metadata = metadata,
-                    multistream = mediaOption.multistreamIsRequired,
-                    spotlight = mediaOption.spotlightOption?.let {
-                        if (Sora.usesSpotlightLegacy)
-                            it.spotlightNumber
-                        else
-                            true
-                    },
-                    spotlightNumber = mediaOption.spotlightOption?.let {
-                        if (Sora.usesSpotlightLegacy)
-                            null
-                        else
-                            it.spotlightNumber
-                    },
-                    sdp = sdp,
-                    clientId = clientId,
-                    signalingNotifyMetadata = signalingNotifyMetadata
+                role = role.signaling,
+                channelId = channelId,
+                dataChannelSignaling = dataChannelSignaling,
+                ignoreDisconnectWebsocket = ignoreDisconnectWebSocket,
+                metadata = metadata,
+                multistream = mediaOption.multistreamIsRequired,
+                sdp = sdp,
+                clientId = clientId,
+                signalingNotifyMetadata = signalingNotifyMetadata,
             )
 
             if (mediaOption.upstreamIsRequired) {
@@ -61,7 +63,6 @@ class MessageConverter {
                     }
 
                     msg.audio = audioSetting
-
                 } else {
                     msg.audio = false
                 }
@@ -97,9 +98,15 @@ class MessageConverter {
                 msg.simulcastRid = mediaOption.simulcastRid?.toString()
             }
 
-            if (mediaOption.spotlightOption != null && !Sora.usesSpotlightLegacy) {
+            if (mediaOption.spotlightOption != null) {
+                msg.spotlight = true
+                msg.spotlightNumber = mediaOption.spotlightOption?.spotlightNumber
                 msg.spotlightFocusRid = mediaOption.spotlightOption?.spotlightFocusRid?.toString()
                 msg.spotlightUnfocusRid = mediaOption.spotlightOption?.spotlightUnfocusRid?.toString()
+            }
+
+            if (redirect) {
+                msg.redirect = true
             }
 
             val jsonMsg = gson.toJson(msg)
@@ -107,8 +114,14 @@ class MessageConverter {
             return jsonMsg
         }
 
-        fun buildPongMessage(stats: Any?): String {
-            return gson.toJson(PongMessage(stats = stats))
+        fun buildPongMessage(stats: RTCStatsReport?): String {
+            return gson.toJson(
+                PongMessage(
+                    stats = stats?.let {
+                        stats.statsMap.values.map { stats -> SoraRTCStats(stats) }
+                    }
+                )
+            )
         }
 
         fun buildUpdateAnswerMessage(sdp: String): String {
@@ -127,12 +140,12 @@ class MessageConverter {
             return gson.toJson(CandidateMessage(candidate = sdp))
         }
 
-        fun buildStatsMessage(reports: Any): String {
-            return gson.toJson(StatsMessage(reports = reports))
+        fun buildStatsMessage(reports: RTCStatsReport): String {
+            return gson.toJson(StatsMessage(reports = reports.statsMap.values.map { stats -> SoraRTCStats(stats) }))
         }
 
-        fun buildDisconnectMessage(): String {
-            return gson.toJson(DisconnectMessage())
+        fun buildDisconnectMessage(disconnectReason: SoraDisconnectReason?): String {
+            return gson.toJson(DisconnectMessage(reason = disconnectReason?.value ?: null))
         }
 
         fun parseType(text: String): String? {
@@ -171,6 +184,9 @@ class MessageConverter {
         fun parseReqStatsMessage(text: String): ReqStatsMessage {
             return gson.fromJson(text, ReqStatsMessage::class.java)
         }
+
+        fun parseRedirectMessage(text: String): RedirectMessage {
+            return gson.fromJson(text, RedirectMessage::class.java)
+        }
     }
 }
-
